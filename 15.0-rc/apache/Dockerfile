@@ -34,6 +34,7 @@ RUN set -ex; \
         libpq-dev \
         libxml2-dev \
         libmagickwand-dev \
+        libpcre++-dev \
     ; \
     \
     debMultiarch="$(dpkg-architecture --query DEB_BUILD_MULTIARCH)"; \
@@ -56,12 +57,14 @@ RUN set -ex; \
     pecl install memcached-3.0.4; \
     pecl install redis-4.2.0; \
     pecl install imagick-3.4.3; \
+    pecl install oauth; \
     \
     docker-php-ext-enable \
         apcu \
         memcached \
         redis \
         imagick \
+        oauth \
     ; \
     \
 # reset apt-mark's "manual" list so that "purge --auto-remove" will remove all build dependencies
@@ -118,12 +121,13 @@ RUN set -ex; \
     "; \
     apt-get update; \
     apt-get install -y --no-install-recommends $fetchDeps; \
-    \
     curl -fsSL -o nextcloud.tar.bz2 \
         "https://download.nextcloud.com/server/prereleases/nextcloud-${NEXTCLOUD_VERSION}.tar.bz2"; \
     curl -fsSL -o nextcloud.tar.bz2.asc \
         "https://download.nextcloud.com/server/prereleases/nextcloud-${NEXTCLOUD_VERSION}.tar.bz2.asc"; \
     export GNUPGHOME="$(mktemp -d)"; \
+    mkdir $GNUPGHOME/.gnupg; \
+    echo "disable-ipv6" >> $GNUPGHOME/.gnupg/dirmngr.conf; \
 # gpg key from https://nextcloud.com/nextcloud.asc
     gpg --batch --keyserver ha.pool.sks-keyservers.net --recv-keys 28806A878AE423A28372792ED75899B9A724937A; \
     gpg --batch --verify nextcloud.tar.bz2.asc nextcloud.tar.bz2; \
